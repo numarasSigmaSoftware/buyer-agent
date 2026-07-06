@@ -53,6 +53,21 @@ def test_buyer_shell_links_to_docs_and_generated_client():
     assert "Buyer API Explorer" in response.text
 
 
+def test_buyer_shell_contains_workflow_screens():
+    response = _client().get("/buyer")
+
+    assert response.status_code == 200
+    for label in ("Product Search", "Bookings", "Buyer Orders", "Events"):
+        assert label in response.text
+    for endpoint in (
+        "/products/search",
+        "/bookings",
+        "/api/v1/buyer/orders",
+        "/events",
+    ):
+        assert endpoint in response.text
+
+
 def test_buyer_openapi_client_exports_operations():
     response = _client().get("/buyer/openapi-client.js")
 
