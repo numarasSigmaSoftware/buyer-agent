@@ -190,6 +190,17 @@ def _buyer_html() -> str:
       overflow-wrap: anywhere; }
     .operation span { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
     .selected { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+    .tabs { display: flex; gap: 8px; margin: 20px 0 4px; flex-wrap: wrap; }
+    .tab { border-color: var(--line); }
+    .tab.active { border-color: var(--accent); color: #ffffff; background: var(--accent); }
+    .panel[hidden] { display: none; }
+    .workflow-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
+      align-items: start; }
+    .workflow-actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+    .workflow-output { border: 1px solid var(--line); border-radius: 8px; padding: 12px;
+      background: #ffffff; min-height: 120px; max-height: 320px; overflow: auto;
+      font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre-wrap; }
     .form-grid { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 12px;
       align-items: start; }
     .param-grid { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(120px, 1fr);
@@ -200,7 +211,7 @@ def _buyer_html() -> str:
       white-space: pre-wrap; }
     .warning { color: var(--warn); }
     @media (max-width: 900px) { header, main { display: block; } aside { border-right: 0;
-      border-bottom: 1px solid var(--line); } .overview, .form-grid {
+      border-bottom: 1px solid var(--line); } .overview, .form-grid, .workflow-grid {
       grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -228,22 +239,124 @@ def _buyer_html() -> str:
         <div class="metric"><b>Operations</b><span id="operation-count">0</span></div>
         <div class="metric"><b>Selected</b><span id="selected-operation">none</span></div>
       </div>
-      <h2 id="operation-title">Buyer API Explorer</h2>
-      <div class="form-grid">
-        <label for="method">Method</label><select id="method"></select>
-        <label for="path">Path</label><input id="path" value="/health">
-        <label for="api-key">API Key</label><input id="api-key" type="password" autocomplete="off">
-        <label for="query">Query Parameters</label><div id="query"></div>
-        <label for="headers">Extra Headers JSON</label><textarea id="headers"
-          spellcheck="false">{}</textarea>
-        <label for="body">JSON Body</label><textarea id="body" spellcheck="false"></textarea>
+      <div class="tabs" role="tablist" aria-label="Buyer workflow screens">
+        <button class="tab active" id="tab-products" data-panel="products-panel" role="tab"
+          aria-controls="products-panel" aria-selected="true">Product Search</button>
+        <button class="tab" id="tab-bookings" data-panel="bookings-panel" role="tab"
+          aria-controls="bookings-panel" aria-selected="false">Bookings</button>
+        <button class="tab" id="tab-orders" data-panel="orders-panel" role="tab"
+          aria-controls="orders-panel" aria-selected="false">Buyer Orders</button>
+        <button class="tab" id="tab-events" data-panel="events-panel" role="tab"
+          aria-controls="events-panel" aria-selected="false">Events</button>
+        <button class="tab" id="tab-explorer" data-panel="explorer-panel" role="tab"
+          aria-controls="explorer-panel" aria-selected="false">API Explorer</button>
       </div>
-      <div class="toolbar">
-        <button id="send">Send request</button>
-        <button id="add-query">Add query</button>
-        <button id="health-refresh">Refresh health</button>
+
+      <div id="products-panel" class="panel" role="tabpanel" aria-labelledby="tab-products">
+        <h2>Product Search</h2>
+        <div class="workflow-grid">
+          <label for="product-channel">Channel</label><input id="product-channel"
+            placeholder="CTV, display, audio">
+          <label for="product-format">Format</label><input id="product-format"
+            placeholder="video, banner, podcast">
+          <label for="product-min-price">Min CPM</label><input id="product-min-price"
+            type="number" min="0" step="0.01">
+          <label for="product-max-price">Max CPM</label><input id="product-max-price"
+            type="number" min="0" step="0.01">
+          <label for="product-limit">Limit</label><input id="product-limit" type="number"
+            min="1" max="50" value="10">
+        </div>
+        <div class="workflow-actions">
+          <button id="search-products">Search products</button>
+        </div>
+        <pre id="product-results" class="workflow-output">No product search run yet.</pre>
       </div>
-      <pre id="response" class="response">Select an operation or send /health.</pre>
+
+      <div id="bookings-panel" class="panel" role="tabpanel" aria-labelledby="tab-bookings" hidden>
+        <h2>Bookings</h2>
+        <div class="workflow-grid">
+          <label for="booking-name">Campaign</label><input id="booking-name"
+            value="Q3 Awareness Campaign">
+          <label for="booking-budget">Budget</label><input id="booking-budget" type="number"
+            min="1" step="1000" value="50000">
+          <label for="booking-start">Start Date</label><input id="booking-start" type="date">
+          <label for="booking-end">End Date</label><input id="booking-end" type="date">
+          <label for="booking-objectives">Objectives JSON</label><textarea id="booking-objectives"
+            spellcheck="false">["awareness"]</textarea>
+          <label for="booking-audience">Audience JSON</label><textarea id="booking-audience"
+            spellcheck="false">{"segments":["auto intenders"],"geo":["US"]}</textarea>
+          <label for="booking-kpis">KPIs JSON</label><textarea id="booking-kpis"
+            spellcheck="false">{"reach":1000000}</textarea>
+          <label for="booking-channels">Channels JSON</label><textarea id="booking-channels"
+            spellcheck="false">["CTV","display"]</textarea>
+          <label for="booking-auto">Auto approve</label><select id="booking-auto">
+            <option value="false">No</option><option value="true">Yes</option>
+          </select>
+          <label for="booking-job-id">Job ID</label><input id="booking-job-id"
+            placeholder="Paste a booking job ID">
+        </div>
+        <div class="workflow-actions">
+          <button id="create-booking">Create booking</button>
+          <button id="list-bookings">List bookings</button>
+          <button id="refresh-booking">Refresh status</button>
+          <button id="approve-booking">Approve all</button>
+        </div>
+        <pre id="booking-results" class="workflow-output">No booking action run yet.</pre>
+      </div>
+
+      <div id="orders-panel" class="panel" role="tabpanel" aria-labelledby="tab-orders" hidden>
+        <h2>Buyer Orders</h2>
+        <div class="workflow-grid">
+          <label for="order-status">Status</label><input id="order-status"
+            placeholder="accepted, pending, completed">
+          <label for="order-id">Order ID</label><input id="order-id"
+            placeholder="Order ID for audit">
+        </div>
+        <div class="workflow-actions">
+          <button id="list-orders">List buyer orders</button>
+          <button id="load-order-audit">Load audit</button>
+        </div>
+        <pre id="order-results" class="workflow-output">No order action run yet.</pre>
+      </div>
+
+      <div id="events-panel" class="panel" role="tabpanel" aria-labelledby="tab-events" hidden>
+        <h2>Events</h2>
+        <div class="workflow-grid">
+          <label for="event-type">Event Type</label><input id="event-type"
+            placeholder="booking.completed">
+          <label for="event-flow-id">Flow ID</label><input id="event-flow-id">
+          <label for="event-session-id">Session ID</label><input id="event-session-id">
+          <label for="event-limit">Limit</label><input id="event-limit" type="number"
+            min="1" max="200" value="50">
+          <label for="event-id">Event ID</label><input id="event-id"
+            placeholder="Event ID for detail">
+        </div>
+        <div class="workflow-actions">
+          <button id="list-events">List events</button>
+          <button id="load-event">Load event</button>
+        </div>
+        <pre id="event-results" class="workflow-output">No event action run yet.</pre>
+      </div>
+
+      <div id="explorer-panel" class="panel" role="tabpanel" aria-labelledby="tab-explorer" hidden>
+        <h2 id="operation-title">Buyer API Explorer</h2>
+        <div class="form-grid">
+          <label for="method">Method</label><select id="method"></select>
+          <label for="path">Path</label><input id="path" value="/health">
+          <label for="api-key">API Key</label><input id="api-key" type="password"
+            autocomplete="off">
+          <label for="query">Query Parameters</label><div id="query"></div>
+          <label for="headers">Extra Headers JSON</label><textarea id="headers"
+            spellcheck="false">{}</textarea>
+          <label for="body">JSON Body</label><textarea id="body" spellcheck="false"></textarea>
+        </div>
+        <div class="toolbar">
+          <button id="send">Send request</button>
+          <button id="add-query">Add query</button>
+          <button id="health-refresh">Refresh health</button>
+        </div>
+        <pre id="response" class="response">Select an operation or send /health.</pre>
+      </div>
     </section>
   </main>
   <script src="/buyer/openapi-client.js"></script>
@@ -260,8 +373,46 @@ def _buyer_html() -> str:
     const query = document.querySelector('#query');
     methods.forEach((name) => method.append(new Option(name, name)));
 
+    function jsonField(selector, fallback) {
+      const text = document.querySelector(selector).value.trim();
+      return text ? JSON.parse(text) : fallback;
+    }
+
+    function numberField(selector) {
+      const value = document.querySelector(selector).value.trim();
+      return value ? Number(value) : null;
+    }
+
+    function textField(selector) {
+      return document.querySelector(selector).value.trim();
+    }
+
+    function setDefaultBookingDates() {
+      const start = new Date();
+      const end = new Date();
+      end.setDate(start.getDate() + 30);
+      document.querySelector('#booking-start').value = start.toISOString().slice(0, 10);
+      document.querySelector('#booking-end').value = end.toISOString().slice(0, 10);
+    }
+
     function setResponse(value) {
       response.textContent = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+    }
+
+    function setOutput(selector, value) {
+      document.querySelector(selector).textContent =
+        typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+    }
+
+    async function workflowRequest({ method, path, query = {}, body = null }) {
+      const result = await window.buyerApiClient.request({
+        method,
+        path,
+        headers: requestHeaders(),
+        query,
+        body,
+      });
+      return { status: result.status, ok: result.ok, data: result.data };
     }
 
     function addQueryRow(name = '', value = '') {
@@ -301,8 +452,11 @@ def _buyer_html() -> str:
       for (const operation of items) {
         const button = document.createElement('button');
         button.className = 'operation';
-        button.innerHTML = `<strong>${operation.method} ${operation.path}</strong>` +
-          `<span>${operation.summary}</span>`;
+        const title = document.createElement('strong');
+        title.textContent = `${operation.method} ${operation.path}`;
+        const summary = document.createElement('span');
+        summary.textContent = operation.summary;
+        button.append(title, summary);
         button.addEventListener('click', () => selectOperation(operation, button));
         operations.append(button);
       }
@@ -353,11 +507,180 @@ def _buyer_html() -> str:
       }
     }
 
+    async function searchProducts() {
+      try {
+        const payload = {
+          channel: textField('#product-channel') || null,
+          format: textField('#product-format') || null,
+          min_price: numberField('#product-min-price'),
+          max_price: numberField('#product-max-price'),
+          limit: numberField('#product-limit') || 10,
+        };
+        setOutput('#product-results', await workflowRequest({
+          method: 'POST',
+          path: '/products/search',
+          body: payload,
+        }));
+      } catch (error) {
+        setOutput('#product-results', `Product search failed: ${error.message}`);
+      }
+    }
+
+    function bookingPayload() {
+      return {
+        brief: {
+          name: textField('#booking-name'),
+          objectives: jsonField('#booking-objectives', []),
+          budget: Number(textField('#booking-budget')),
+          start_date: textField('#booking-start'),
+          end_date: textField('#booking-end'),
+          target_audience: jsonField('#booking-audience', {}),
+          kpis: jsonField('#booking-kpis', {}),
+          channels: jsonField('#booking-channels', null),
+        },
+        auto_approve: document.querySelector('#booking-auto').value === 'true',
+      };
+    }
+
+    async function createBooking() {
+      try {
+        const result = await workflowRequest({
+          method: 'POST',
+          path: '/bookings',
+          body: bookingPayload(),
+        });
+        const jobId = result.data && result.data.job_id;
+        if (jobId) document.querySelector('#booking-job-id').value = jobId;
+        setOutput('#booking-results', result);
+      } catch (error) {
+        setOutput('#booking-results', `Create booking failed: ${error.message}`);
+      }
+    }
+
+    async function listBookings() {
+      try {
+        setOutput('#booking-results', await workflowRequest({
+          method: 'GET',
+          path: '/bookings',
+          query: { limit: '20' },
+        }));
+      } catch (error) {
+        setOutput('#booking-results', `List bookings failed: ${error.message}`);
+      }
+    }
+
+    async function refreshBooking() {
+      try {
+        const jobId = textField('#booking-job-id');
+        if (!jobId) throw new Error('Booking job ID is required.');
+        setOutput('#booking-results', await workflowRequest({
+          method: 'GET',
+          path: `/bookings/${encodeURIComponent(jobId)}`,
+        }));
+      } catch (error) {
+        setOutput('#booking-results', `Refresh booking failed: ${error.message}`);
+      }
+    }
+
+    async function approveBooking() {
+      try {
+        const jobId = textField('#booking-job-id');
+        if (!jobId) throw new Error('Booking job ID is required.');
+        setOutput('#booking-results', await workflowRequest({
+          method: 'POST',
+          path: `/bookings/${encodeURIComponent(jobId)}/approve-all`,
+        }));
+      } catch (error) {
+        setOutput('#booking-results', `Approve booking failed: ${error.message}`);
+      }
+    }
+
+    async function listOrders() {
+      try {
+        const status = textField('#order-status');
+        setOutput('#order-results', await workflowRequest({
+          method: 'GET',
+          path: '/api/v1/buyer/orders',
+          query: status ? { status } : {},
+        }));
+      } catch (error) {
+        setOutput('#order-results', `List orders failed: ${error.message}`);
+      }
+    }
+
+    async function loadOrderAudit() {
+      try {
+        const orderId = textField('#order-id');
+        if (!orderId) throw new Error('Order ID is required.');
+        setOutput('#order-results', await workflowRequest({
+          method: 'GET',
+          path: `/api/v1/buyer/orders/${encodeURIComponent(orderId)}/audit`,
+        }));
+      } catch (error) {
+        setOutput('#order-results', `Load audit failed: ${error.message}`);
+      }
+    }
+
+    async function listEvents() {
+      try {
+        const requestQuery = {
+          event_type: textField('#event-type'),
+          flow_id: textField('#event-flow-id'),
+          session_id: textField('#event-session-id'),
+          limit: textField('#event-limit') || '50',
+        };
+        Object.keys(requestQuery).forEach((key) => {
+          if (!requestQuery[key]) delete requestQuery[key];
+        });
+        setOutput('#event-results', await workflowRequest({
+          method: 'GET',
+          path: '/events',
+          query: requestQuery,
+        }));
+      } catch (error) {
+        setOutput('#event-results', `List events failed: ${error.message}`);
+      }
+    }
+
+    async function loadEvent() {
+      try {
+        const eventId = textField('#event-id');
+        if (!eventId) throw new Error('Event ID is required.');
+        setOutput('#event-results', await workflowRequest({
+          method: 'GET',
+          path: `/events/${encodeURIComponent(eventId)}`,
+        }));
+      } catch (error) {
+        setOutput('#event-results', `Load event failed: ${error.message}`);
+      }
+    }
+
     document.querySelector('#send').addEventListener('click', sendRequest);
     document.querySelector('#health-refresh').addEventListener('click', refreshHealth);
     document.querySelector('#add-query').addEventListener('click', () => addQueryRow());
+    document.querySelector('#search-products').addEventListener('click', searchProducts);
+    document.querySelector('#create-booking').addEventListener('click', createBooking);
+    document.querySelector('#list-bookings').addEventListener('click', listBookings);
+    document.querySelector('#refresh-booking').addEventListener('click', refreshBooking);
+    document.querySelector('#approve-booking').addEventListener('click', approveBooking);
+    document.querySelector('#list-orders').addEventListener('click', listOrders);
+    document.querySelector('#load-order-audit').addEventListener('click', loadOrderAudit);
+    document.querySelector('#list-events').addEventListener('click', listEvents);
+    document.querySelector('#load-event').addEventListener('click', loadEvent);
+    document.querySelectorAll('.tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach((item) => {
+          item.classList.toggle('active', item === tab);
+          item.setAttribute('aria-selected', item === tab ? 'true' : 'false');
+        });
+        document.querySelectorAll('.panel').forEach((panel) => {
+          panel.hidden = panel.id !== tab.dataset.panel;
+        });
+      });
+    });
     search.addEventListener('input', renderOperations);
     addQueryRow();
+    setDefaultBookingDates();
     renderOperations();
     refreshHealth();
   </script>
