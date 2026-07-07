@@ -133,8 +133,11 @@ The repository includes two GitHub Actions workflows:
   verification.
 
 - **`.github/workflows/deploy.yml`**: Runs on push to main (non-docs
-  changes) or manual trigger. Builds the Docker image, pushes to ECR,
-  and updates the ECS service.
+  changes) or manual trigger. The manual trigger can deploy the latest
+  commit from any repository/ref pair, which is useful when operating
+  from the `numarasSigmaSoftware/buyer-agent` fork instead of the
+  upstream `IABTechLab/buyer-agent` repo. It builds the Docker image,
+  pushes to ECR, and updates the ECS service.
 
 ### Required GitHub Secrets
 

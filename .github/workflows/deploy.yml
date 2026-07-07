@@ -17,6 +17,16 @@ on:
         options:
           - staging
           - production
+      repository:
+        description: 'Repository to deploy from'
+        required: true
+        default: 'numarasSigmaSoftware/buyer-agent'
+        type: string
+      ref:
+        description: 'Git ref to deploy (branch, tag, or SHA)'
+        required: true
+        default: 'main'
+        type: string
 
 permissions:
   id-token: write
@@ -36,6 +46,21 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event_name == 'workflow_dispatch' && inputs.repository || github.repository }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref }}
+          fetch-depth: 0
+
+      - name: Resolve deployment revision
+        id: source
+        run: |
+          echo "git_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Show deployment source
+        run: |
+          echo "Repository: ${{ github.event_name == 'workflow_dispatch' && inputs.repository || github.repository }}"
+          echo "Ref:        ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref_name }}"
+          echo "Commit:     ${{ steps.source.outputs.git_sha }}"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -51,7 +76,7 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
+          IMAGE_TAG: ${{ steps.source.outputs.git_sha }}
         run: |
           docker build \
             -f infra/docker/Dockerfile \

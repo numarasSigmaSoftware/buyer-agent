@@ -29,7 +29,7 @@ This guide covers everything needed to run the buyer agent in any environment â€
 ### Install Dependencies
 
 ```bash
-git clone https://github.com/IABTechLab/buyer-agent.git
+git clone https://github.com/numarasSigmaSoftware/buyer-agent.git
 cd buyer-agent
 
 # Create and activate a virtual environment

@@ -129,7 +129,7 @@ Plug in an [IAB Diligence Platform](https://safeguardprivacy.com) tenant to keep
 ### Install
 
 ```bash
-git clone https://github.com/IABTechLab/buyer-agent.git
+git clone https://github.com/numarasSigmaSoftware/buyer-agent.git
 cd buyer-agent
 pip install -e .
 ```

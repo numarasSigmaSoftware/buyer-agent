@@ -14,7 +14,7 @@ Set up the buyer agent infrastructure, connect to seller agents and SSPs, and ge
 
 ```bash
 # Clone and install
-git clone https://github.com/IABTechLab/buyer-agent.git
+git clone https://github.com/numarasSigmaSoftware/buyer-agent.git
 cd buyer-agent
 pip install -e .
 
